@@ -10,3 +10,5 @@ To build your code
 For hot reload to codingame
 1. Set Codingame Sync tool to upload from `./dist/answer.js`;
 2. Use `npm run watch`
+
+`./src/index.js` should contain main game loop
