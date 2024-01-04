@@ -1,5 +1,5 @@
 {
-  "name": "CodingameSpring2021",
+  "name": "Seabedsecurity",
   "version": "1.0.0",
   "description": "",
   "private": true,
@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/artisb45/CodingameSpring2021#readme",
   "devDependencies": {
+    "copy-webpack-plugin": "^11.0.0",
     "webpack": "^5.36.2",
     "webpack-cli": "^4.7.0"
   }
