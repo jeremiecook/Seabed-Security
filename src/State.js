@@ -18,6 +18,10 @@ export default class State {
     this.readCreatures();
   }
 
+  getCreature(id) {
+    return this.creature.get(id);
+  }
+
   getFishes() {
     return Array.from(this.creatures.values()).filter((creature) => creature.type !== -1);
   }

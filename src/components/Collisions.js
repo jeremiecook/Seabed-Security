@@ -1,64 +1,57 @@
-import * as CONST from "../constants";
+import Vector from "../models/Vector";
+import { MONSTER, DRONE } from "../constants";
 
 export default class Collisions {
-  check(drone, obstacles) {}
+  check(drone, monsters) {
+    const safeDistance = MONSTER.SPEED + 20; // Vitesse de déplacement d'un monstre
+    const position = drone.position;
+    const destination = drone.destination;
 
-  // Eviter les monstres
-  avoidMonsters(position, destination) {
-    const safeDistance = CONST.MONSTER.SPEED + 10; // Vitesse de déplacement d'un monstre
-    const monsters = this.game.getVisibleMonsters();
+    if (drone.dead) {
+      console.warn("DEAD ☠️");
+      return destination;
+    }
+
+    console.warn(monsters);
 
     // Monstres à proximité
-    const closeMonsters = monsters.filter(
-      (monster) => monster.getDestination().distance(position) < safeDistance * 3
-    );
+    // const closeMonsters = monsters.filter(
+    //   (monster) => monster.getDestination().distance(position) < safeDistance * 5
+    // );
+
+    const closeMonsters = monsters;
 
     // Si aucun monstre à proximité, on va directement à la destination
     if (closeMonsters.length === 0) return destination;
     console.warn("Monster Detected");
 
     // Define a list of escape points
-    const numPoints = 16;
-    const escapePoints = [];
-    const distance = DRONE_SPEED; // Vitesse du drone
-    const angleIncrement = (2 * Math.PI) / numPoints; // Full circle divided by the number of points
-
-    for (let i = 0; i < numPoints; i++) {
-      const angle = angleIncrement * i;
-      const escapeX = Math.round(position.x + distance * Math.cos(angle));
-      const escapeY = Math.round(position.y + distance * Math.sin(angle));
-      escapePoints.push(new Vector(escapeX, escapeY));
-    }
+    const escapePoints = this.getEscapePoints(position);
 
     // Remove points to close to monsters
     const safeEscapePoints = escapePoints.filter((escapePoint) => {
       return !closeMonsters.some((monster) => {
-        return segmentsGetTooClose(
+        return this.checkCollision(
           position,
-          escapePoint,
+          escapePoint.subtract(position),
           monster.position,
-          monster.getDestination(),
+          monster.speed,
           safeDistance
         );
       });
     });
-    // const safeEscapePoints = escapePoints.filter(
-    //   (point) =>
-    //     !closeMonsters.some((monster) => monster.getDestination().distance(point) < safeDistance)
-    // );
 
+    // Debug
     closeMonsters.forEach((monster) => {
       console.warn("Drone position", position);
       console.warn("Drone destination", destination);
-
       console.warn("Monster Id", monster.creatureId);
       console.warn("Monster position", monster.position);
       console.warn("Monster speed", monster.speed);
       console.warn("Monster destination", monster.getDestination());
+      console.warn("escapePoints", escapePoints);
       console.warn("safeEscapePoints", safeEscapePoints);
     });
-
-    //console.warn(safeEscapePoints);
 
     // Find the closest point to the destination
     const closestSafePoint = safeEscapePoints.reduce((closest, point) => {
@@ -70,19 +63,31 @@ export default class Collisions {
     return closestSafePoint || destination;
   }
 
-  linesIntersect(p0, p1, p2, p3) {
-    // Calcul des vecteurs
-    let s1_x = p1.x - p0.x;
-    let s1_y = p1.y - p0.y;
-    let s2_x = p3.x - p2.x;
-    let s2_y = p3.y - p2.y;
+  getEscapePoints(position) {
+    const numPoints = 8;
+    const escapePoints = [];
+    const distance = DRONE.SPEED; // Vitesse du drone
+    const angleIncrement = (2 * Math.PI) / numPoints; // Full circle divided by the number of points
 
-    // Calcul des dénominateurs pour les formules d'intersection
-    let s = (-s1_y * (p0.x - p2.x) + s1_x * (p0.y - p2.y)) / (-s2_x * s1_y + s1_x * s2_y);
-    let t = (s2_x * (p0.y - p2.y) - s2_y * (p0.x - p2.x)) / (-s2_x * s1_y + s1_x * s2_y);
+    for (let i = 0; i < numPoints; i++) {
+      const angle = angleIncrement * i;
+      const escapeX = Math.round(position.x + distance * Math.cos(angle));
+      const escapeY = Math.round(position.y + distance * Math.sin(angle));
+      escapePoints.push(new Vector(escapeX, escapeY));
+    }
 
-    // Si s et t sont entre 0 et 1, les lignes se croisent
-    return s >= 0 && s <= 1 && t >= 0 && t <= 1;
+    return escapePoints;
+  }
+
+  checkCollision(P_drone, V_drone, P_monster, V_monster, collisionDistance) {
+    const P_relative = P_drone.subtract(P_monster);
+    const V_relative = V_drone.subtract(V_monster);
+
+    const dotProduct = P_relative.dot(V_relative);
+    const closestPoint = V_relative.multiply(dotProduct / V_relative.magnitude() ** 2);
+    const D_closest = P_relative.subtract(closestPoint).magnitude();
+
+    return D_closest < collisionDistance;
   }
 
   calculateClosestPoints(p1, p2, q1, q2) {
@@ -105,7 +110,7 @@ export default class Collisions {
   }
 
   segmentsGetTooClose(p1, p2, q1, q2, minDistance) {
-    const [closestPointOnP, closestPointOnQ] = calculateClosestPoints(p1, p2, q1, q2);
+    const [closestPointOnP, closestPointOnQ] = this.calculateClosestPoints(p1, p2, q1, q2);
 
     // Calculate the distance between these closest points
     const distance = Math.sqrt(
