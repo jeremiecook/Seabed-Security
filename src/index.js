@@ -3,6 +3,7 @@
 // Calculer les scores des scans réalisés
 // Eliminer les marges inutiles sur les bords et à la surface
 // Améliorer l'algorithme d'évitement
+// Pas de poisson au dela de 2500
 
 import State from "./State";
 import AI from "./AI";

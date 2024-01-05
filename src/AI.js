@@ -16,7 +16,7 @@ export default class AI {
     const score = new Score(state);
     const myScore = score.getMyTotalScore();
 
-    if (myScore > 25) {
+    if (myScore > 72) {
       this.resurface();
       return;
     }

@@ -1,4 +1,5 @@
 import Vector from "../models/Vector";
+import Score from "./Score";
 
 export default class Zones {
   constructor(state) {
@@ -13,10 +14,12 @@ export default class Zones {
 
     //console.warn(d1, d2);
 
+    const minYFishes = 2500;
+
     let minX = Math.min(d1.x, d2.x);
-    let minY = Math.min(d1.y, d2.y);
+    let minY = Math.max(Math.min(d1.y, d2.y), minYFishes);
     let maxX = Math.max(d1.x, d2.x);
-    let maxY = Math.max(d1.y, d2.y);
+    let maxY = Math.max(Math.max(d1.y, d2.y), minYFishes);
     let maxMap = 10000;
 
     let zones = new Map();
@@ -55,13 +58,16 @@ export default class Zones {
       BLBR: "BC",
       BRBR: "BR",
     };
+
     const fishes = this.state.getUnknownFishes();
     fishes.forEach((fish) => {
       let radarIndications = this.state.getRadarIndications(fish.creatureId).join("");
 
       const zoneName = mapping[radarIndications];
       if (zoneName && this.zones.has(zoneName)) {
+        this.zones.get(zoneName).fishesId.push(fish.creatureId);
         this.zones.get(zoneName).fishesCount++;
+        this.zones.get(zoneName).fishesValues++;
       }
     });
     //console.warn(this.zones);
@@ -83,7 +89,11 @@ export default class Zones {
     zones.sort((a, b) => b.score - a.score);
 
     // Select the top two zones
-    return zones.slice(0, 2);
+    const topTwo = zones.slice(0, 2);
+    console.warn("Top 2 zones");
+    console.warn(topTwo[0].zone.toString());
+    console.warn(topTwo[1].zone.toString());
+    return topTwo;
   }
 }
 
@@ -101,6 +111,7 @@ class Zone {
     this.areaValue = (this.br.x - this.tl.x) * (this.br.y - this.tl.y);
     this.fishesCount = 0;
     this.fishesId = [];
+    this.fishesValue = 0;
   }
 
   area() {
@@ -114,5 +125,10 @@ class Zone {
 
   score() {
     return this.area() === 0 ? 0 : this.fishesCount / this.area();
+  }
+
+  toString() {
+    const score = this.score();
+    return `Zone ${this.name} - Score : ${score} - (${this.tl.x},${this.tl.y}) (${this.br.x},${this.br.y})`;
   }
 }

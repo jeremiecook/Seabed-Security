@@ -1,5 +1,5 @@
 import Vector from "../models/Vector";
-import { MONSTER, DRONE } from "../constants";
+import { MAP, MONSTER, DRONE } from "../constants";
 
 export default class Collisions {
   check(drone, monsters) {
@@ -12,7 +12,7 @@ export default class Collisions {
       return destination;
     }
 
-    console.warn(monsters);
+    //console.warn(monsters);
 
     // Monstres à proximité
     // const closeMonsters = monsters.filter(
@@ -29,17 +29,28 @@ export default class Collisions {
     const escapePoints = this.getEscapePoints(position);
 
     // Remove points to close to monsters
-    const safeEscapePoints = escapePoints.filter((escapePoint) => {
-      return !closeMonsters.some((monster) => {
-        return this.checkCollision(
-          position,
-          escapePoint.subtract(position),
-          monster.position,
-          monster.speed,
-          safeDistance
+    const safeEscapePoints = escapePoints
+      // Dans les limites de la map
+      .filter((escapePoint) => {
+        return (
+          escapePoint.x < MAP.XMAX &&
+          escapePoint.x >= MAP.XMIN &&
+          escapePoint.y < MAP.YMAX &&
+          escapePoint.y >= MAP.YMIN
         );
+      })
+      // Loin des monstres
+      .filter((escapePoint) => {
+        return !closeMonsters.some((monster) => {
+          return this.checkCollision(
+            position,
+            escapePoint.subtract(position),
+            monster.position,
+            monster.speed,
+            safeDistance
+          );
+        });
       });
-    });
 
     // Debug
     closeMonsters.forEach((monster) => {
@@ -88,36 +99,5 @@ export default class Collisions {
     const D_closest = P_relative.subtract(closestPoint).magnitude();
 
     return D_closest < collisionDistance;
-  }
-
-  calculateClosestPoints(p1, p2, q1, q2) {
-    // Function to calculate closest point on a segment to another point
-    function closestPointOnSegment(segmentStart, segmentEnd, point) {
-      const segmentVector = { x: segmentEnd.x - segmentStart.x, y: segmentEnd.y - segmentStart.y };
-      const pointVector = { x: point.x - segmentStart.x, y: point.y - segmentStart.y };
-      const segmentLengthSquared =
-        segmentVector.x * segmentVector.x + segmentVector.y * segmentVector.y;
-      const dotProduct = pointVector.x * segmentVector.x + pointVector.y * segmentVector.y;
-      const t = Math.max(0, Math.min(1, dotProduct / segmentLengthSquared));
-      return { x: segmentStart.x + segmentVector.x * t, y: segmentStart.y + segmentVector.y * t };
-    }
-
-    // Find the closest point on each segment to the other segment
-    let closestPointOnP = closestPointOnSegment(p1, p2, q1);
-    let closestPointOnQ = closestPointOnSegment(q1, q2, p1);
-
-    return [closestPointOnP, closestPointOnQ];
-  }
-
-  segmentsGetTooClose(p1, p2, q1, q2, minDistance) {
-    const [closestPointOnP, closestPointOnQ] = this.calculateClosestPoints(p1, p2, q1, q2);
-
-    // Calculate the distance between these closest points
-    const distance = Math.sqrt(
-      Math.pow(closestPointOnP.x - closestPointOnQ.x, 2) +
-        Math.pow(closestPointOnP.y - closestPointOnQ.y, 2)
-    );
-
-    return distance < minDistance;
   }
 }
