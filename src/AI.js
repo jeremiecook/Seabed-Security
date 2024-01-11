@@ -2,11 +2,11 @@ import Vector from "./models/Vector";
 import Zones from "./components/Zones";
 import Collisions from "./components/Collisions";
 import Score from "./components/Score";
+import { MAP } from "./constants";
 
 export default class AI {
   constructor() {
     this.light = 0;
-    //this.resurfaceCheck = false;
   }
 
   nextMove(state) {
@@ -16,18 +16,28 @@ export default class AI {
     const score = new Score(state);
     const myScore = score.getMyTotalScore();
 
-    if (myScore > 72) {
+    console.warn("My score:", myScore);
+    console.warn("Enemy score:", score.getEnemyTotalScore());
+    console.warn("Enemy max score:", score.getEnemyMaxScore());
+
+    // Victoire assurée
+    if (myScore > score.getEnemyMaxScore() || myScore === 96) {
+      this.resurface();
+      return;
+    }
+
+    // Victoire si j'arrive en premier
+    if (myScore >= 70) {
       this.resurface();
       return;
     }
 
     // Explore
     const zones = new Zones(state);
-    //console.warn(zones.zones);
     const [zone1, zone2] = zones.getTopTwoZones();
 
-    const destination1 = zone1.score > 0 ? zone1.zone.center : new Vector(5000, 490);
-    const destination2 = zone2.score > 0 ? zone2.zone.center : new Vector(5000, 490);
+    const destination1 = zone1.score > 0 ? zone1.zone.center : new Vector(5000, -1);
+    const destination2 = zone2.score > 0 ? zone2.zone.center : new Vector(5000, -1);
 
     this.move(destination1, destination2);
   }
@@ -49,6 +59,13 @@ export default class AI {
     drone1.destination = distance1 < distance2 ? point1 : point2;
     drone2.destination = distance1 < distance2 ? point2 : point1;
 
+    console.warn("Destination:", drone1.destination, drone2.destination);
+
+    // On cherche le point le plus proche à la surface
+    [drone1, drone2].forEach((drone) => {
+      if (drone.destination.y === -1) drone.destination = new Vector(drone.position.x, MAP.SURFACE);
+    });
+
     const collisions = new Collisions();
     drone1.destination = collisions.check(drone1, this.state.getVisibleMonsters());
     drone2.destination = collisions.check(drone2, this.state.getVisibleMonsters());
@@ -58,12 +75,15 @@ export default class AI {
     //destination2 = this.avoidMonsters(drone2.position, destination2);
 
     // Print move
-    console.log(`MOVE ${drone1.destination.x} ${drone1.destination.y} ${light}`);
-    console.log(`MOVE ${drone2.destination.x} ${drone2.destination.y} ${light}`);
+    let infos = "";
+    if (light) infos = "🔆";
+
+    console.log(`MOVE ${drone1.destination.x} ${drone1.destination.y} ${light} ${infos}`);
+    console.log(`MOVE ${drone2.destination.x} ${drone2.destination.y} ${light} ${infos}`);
   }
 
   useLight() {
-    return this.light === 3 ? ((this.light = 0), 1) : (this.light++, 0);
+    return this.light === 2 ? ((this.light = 0), 1) : (this.light++, 0);
   }
 
   run() {
@@ -72,15 +92,15 @@ export default class AI {
     let previousScans = 0;
 
     while (true) {
-      let scanned = this.game.me.getAllScannedFishes.length;
+      let scanned = this.game.me.getAllFishes.length;
       turnsWithoutScans++;
       if (scanned > previousScans) {
         turnsWithoutScans = 0;
         previousScans = scanned;
       }
 
-      //console.warn("Scanned", this.game.me.getAllUnsavedScans().length);
-      if (this.game.me.getAllUnsavedScans().length >= 12) {
+      //console.warn("Scanned", this.game.me.getScannedFishes().length);
+      if (this.game.me.getScannedFishes().length >= 12) {
         this.resurfaceCheck = true;
       }
 

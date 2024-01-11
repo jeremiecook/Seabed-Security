@@ -3,6 +3,7 @@ export const MAP = {
   XMAX: 10000,
   YMIN: 0,
   YMAX: 10000,
+  SURFACE: 490,
 };
 
 export const MONSTER = {

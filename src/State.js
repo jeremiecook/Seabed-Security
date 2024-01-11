@@ -31,7 +31,7 @@ export default class State {
   }
 
   getUnknownFishes() {
-    const scannedFishIds = new Set(this.me.getAllScannedFishes());
+    const scannedFishIds = new Set(this.me.getAllFishes());
     const unknownFishes = this.getFishes().filter((fish) => !scannedFishIds.has(fish.creatureId));
     return unknownFishes;
   }
@@ -49,7 +49,7 @@ export default class State {
   getPotentialScore(player) {
     let score = player.score;
 
-    let unsavedScans = player.getAllUnsavedScans();
+    let unsavedScans = player.getScannedFishes();
     score += this.getFishesPotentialScore(unsavedScans);
 
     return score;

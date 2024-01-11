@@ -52,30 +52,35 @@ export default class Collisions {
         });
       });
 
-    // Debug
-    closeMonsters.forEach((monster) => {
-      console.warn("Drone position", position);
-      console.warn("Drone destination", destination);
-      console.warn("Monster Id", monster.creatureId);
-      console.warn("Monster position", monster.position);
-      console.warn("Monster speed", monster.speed);
-      console.warn("Monster destination", monster.getDestination());
-      console.warn("escapePoints", escapePoints);
-      console.warn("safeEscapePoints", safeEscapePoints);
-    });
+    // closeMonsters.forEach((monster) => {
+    //   console.warn("Drone position", position);
+    //   console.warn("Drone destination", destination);
+    //   console.warn("Monster Id", monster.creatureId);
+    //   console.warn("Monster position", monster.position);
+    //   console.warn("Monster speed", monster.speed);
+    //   console.warn("Monster destination", monster.getDestination());
+    //   console.warn("escapePoints", escapePoints);
+    //   console.warn("safeEscapePoints", safeEscapePoints);
+    // });
 
     // Find the closest point to the destination
     const closestSafePoint = safeEscapePoints.reduce((closest, point) => {
       return point.distance(destination) < closest.distance(destination) ? point : closest;
     }, safeEscapePoints[0]); // Initialize with the first safe escape point
 
-    console.warn(closestSafePoint);
+    // Debug
+    console.warn(
+      `Drone ${drone.droneId} : Monsters:`,
+      monsters.map((monster) => monster.creatureId)
+    );
+    console.warn("Safe escape points: ", safeEscapePoints.length);
+    console.warn("Better safe point:", closestSafePoint);
 
     return closestSafePoint || destination;
   }
 
   getEscapePoints(position) {
-    const numPoints = 8;
+    const numPoints = 32;
     const escapePoints = [];
     const distance = DRONE.SPEED; // Vitesse du drone
     const angleIncrement = (2 * Math.PI) / numPoints; // Full circle divided by the number of points

@@ -5,15 +5,15 @@ export default class Player {
     this.scans = [];
   }
 
+  getScannedFishes() {
+    return Array.from(new Set([...this.drones.flatMap((drone) => drone.scans)]));
+  }
+
   getSavedFishes() {
     return this.scans;
   }
 
-  getAllScannedFishes() {
+  getAllFishes() {
     return Array.from(new Set([...this.scans, ...this.drones.flatMap((drone) => drone.scans)]));
-  }
-
-  getAllUnsavedScans() {
-    return Array.from(new Set([...this.drones.flatMap((drone) => drone.scans)]));
   }
 }

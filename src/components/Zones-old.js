@@ -17,17 +17,17 @@ export default class Zones {
     const minYFishes = 2500;
 
     let minX = Math.min(d1.x, d2.x);
+    let minY = Math.max(Math.min(d1.y, d2.y), minYFishes);
     let maxX = Math.max(d1.x, d2.x);
-    let minY = 5000;
-    let maxY = 7500;
+    let maxY = Math.max(Math.max(d1.y, d2.y), minYFishes);
     let maxMap = 10000;
 
     let zones = new Map();
 
     // Top row
-    zones.set("TL", new Zone("TL", new Vector(0, 2500), new Vector(minX, minY)));
-    zones.set("TC", new Zone("TC", new Vector(minX, 2500), new Vector(maxX, minY)));
-    zones.set("TR", new Zone("TR", new Vector(maxX, 2500), new Vector(maxMap, minY)));
+    zones.set("TL", new Zone("TL", new Vector(0, 0), new Vector(minX, minY)));
+    zones.set("TC", new Zone("TC", new Vector(minX, 0), new Vector(maxX, minY)));
+    zones.set("TR", new Zone("TR", new Vector(maxX, 0), new Vector(maxMap, minY)));
 
     // Center row
     zones.set("CL", new Zone("CL", new Vector(0, minY), new Vector(minX, maxY)));
@@ -45,37 +45,29 @@ export default class Zones {
 
   // Analyse des positions des poissons
   analyzeFishesPositions() {
-    const typeMapping = {
-      0: "T",
-      1: "C",
-      2: "B",
-    };
-
     // Map radarBlips to a zone
-    const radarMapping = {
-      TLTL: "L",
-      TLTR: "C",
-      TRTR: "R",
-      BLTL: "L",
-      BRTL: "C",
-      BLTR: "C",
-      BRTR: "R",
-      BLBL: "L",
-      BLBR: "C",
-      BRBR: "R",
+    const mapping = {
+      TLTL: "TL",
+      TLTR: "TC",
+      TRTR: "TR",
+      BLTL: "CL",
+      BRTL: "CC",
+      BLTR: "CC",
+      BRTR: "CR",
+      BLBL: "BL",
+      BLBR: "BC",
+      BRBR: "BR",
     };
 
     const fishes = this.state.getUnknownFishes();
-
     fishes.forEach((fish) => {
       let radarIndications = this.state.getRadarIndications(fish.creatureId).join("");
 
-      const zoneName = typeMapping[fish.type] + radarMapping[radarIndications];
-
+      const zoneName = mapping[radarIndications];
       if (zoneName && this.zones.has(zoneName)) {
         this.zones.get(zoneName).fishesId.push(fish.creatureId);
         this.zones.get(zoneName).fishesCount++;
-        this.zones.get(zoneName).fishesValue += fish.type + 1;
+        this.zones.get(zoneName).fishesValues++;
       }
     });
     //console.warn(this.zones);
@@ -132,7 +124,7 @@ class Zone {
   }
 
   score() {
-    return this.area() === 0 ? 0 : this.fishesValue / this.area();
+    return this.area() === 0 ? 0 : this.fishesCount / this.area();
   }
 
   toString() {
